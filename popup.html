@@ -1,110 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Steamroller Analysis</title>
-  <style>
-    body {
-      width: 400px;
-      max-height: 500px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 15px;
-      background-color: #f8f9fa;
-      color: #212529;
-    }
-    #loading, .error {
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-      color: #6c757d;
-    }
-    .error {
-      color: #d93025;
-      font-weight: 500;
-      text-align: left;
-    }
-
-    #results-container {
-      display: none; /* Hidden until we have data */
-    }
-
-    #title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #000;
-      margin-bottom: 12px;
-    }
-
-    #summary {
-      border-radius: 8px;
-      padding: 12px 15px;
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-    }
-    #summary p {
-      margin: 0;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    /* Risk-specific styling */
-    .risk-high { background-color: #fff0f0; border-color: #f5c6cb; color: #721c24; }
-    .risk-medium { background-color: #fff8eb; border-color: #ffe0b3; color: #856404; }
-    .risk-low { background-color: #f0f8f0; border-color: #c3e6cb; color: #155724; }
-    .risk-unknown { background-color: #f8f9fa; border-color: #dee2e6; color: #343a40; }
-
-    #outcomes {
-      display: grid;
-      gap: 10px;
-    }
-    .outcome {
-      background: #ffffff;
-      border: 1px solid #dee2e6;
-      border-radius: 8px;
-      padding: 12px;
-    }
-    .outcome-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .outcome-name {
-      font-size: 18px;
-      font-weight: 700;
-    }
-    .outcome-prob {
-      font-size: 20px;
-      font-weight: 700;
-      color: #0052cc;
-    }
-    .outcome-prob-No { color: #d93025; }
-    .outcome-prob-Yes { color: #1e8e3e; }
-
-    .metrics {
-      font-size: 12px;
-      color: #5f6368;
-    }
-    .metrics strong {
-      color: #202124;
-    }
-
-  </style>
+  <title>Polymarket Tools</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div id="loading">
-    <p>Loading analysis...</p>
+  <h3>Polymarket Tools</h3>
+  
+  <div id="button-container">
+    <button id="feature1Btn">Feature 1</button>
+    <button id="feature2Btn">Feature 2</button>
+    <button id="feature3Btn">Feature 3</button>
   </div>
+  
+  <div id="outcome">Click a feature...</div>
 
-  <div id="error-container"></div>
-
-  <div id="results-container">
-    <div id="title"></div>
-    <div id="summary">
-      <p id="summary-message"></p>
-    </div>
-    <div id="outcomes"></div>
-  </div>
-
-  <script src="popup.js"></script>
+  <script src="popup.js" defer></script>
 </body>
 </html>

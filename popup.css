@@ -1,0 +1,47 @@
+body {
+  width: 250px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  text-align: center;
+  background-color: #f9f9f9;
+  padding: 10px 15px 15px 15px; /* Added more padding */
+}
+
+h3 {
+  color: #333;
+  margin-top: 0;
+}
+
+/* This styles the container for the buttons */
+#button-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Adds space between buttons */
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #007aff; /* A nice blue */
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* Make the button change on hover */
+button:hover {
+  background-color: #0056b3;
+}
+
+/* This is where your outcome will be displayed */
+#outcome {
+  margin-top: 15px;
+  padding: 10px;
+  font-size: 14px;
+  color: #555;
+  background-color: #eee;
+  border-radius: 5px;
+  min-height: 20px; /* Gives it some space */
+}
