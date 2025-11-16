@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Polymarket Gamma -> Gemini AI summarizer (Not financial advice).
 
@@ -22,9 +19,11 @@ import textwrap
 import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
+from dotenv import load_dotenv
 
 # ----- Constants -----
 
+load_dotenv()
 GAMMA_BASE_URL = "https://gamma-api.polymarket.com"
 USER_AGENT = "PolyPredictionKit/0.1 (hackathon-cli)"
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
@@ -416,7 +415,7 @@ Here is structured data about one Polymarket event and some of its markets:
 
 {summary}
 
-Using this information, write a short "AI Trade Insight (Not financial advice)" section in 3–6 sentences.
+Using this information, write a short AI Trade Insight section in 3–6 sentences.
 
 Focus on:
 - What current prices roughly imply about market expectations.
@@ -512,8 +511,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("[AI] GEMINI_API_KEY is not set. Unable to generate AI Trade Insight.", file=sys.stderr)
         return 1
 
-    print("AI Trade Insight (Not financial advice)")
     print("-" * 88)
+    print("AI Trade Insight (Not financial advice):")
 
     try:
         prompt = build_gemini_prompt(event, markets)
