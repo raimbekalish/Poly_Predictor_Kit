@@ -1,18 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Polymarket Copilot Auto",
-  "version": "1.0.0",
-  "description": "Automatically analyzes a Polymarket market when you open it.",
-  "permissions": [],
-  "host_permissions": [
-    "https://polymarket.com/*",
-    "https://YOUR_BACKEND_URL/*"
+  "name": "Polymarket Steamroller",
+  "version": "1.0",
+  "description": "Analyzes Polymarket event pages for steamroller risk.",
+  "permissions": [
+    "activeTab"
   ],
-  "content_scripts": [
-    {
-      "matches": ["https://polymarket.com/*"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
-    }
-  ]
+  "host_permissions": [
+    "http://localhost:5001/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
 }
