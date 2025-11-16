@@ -1,15 +1,3 @@
-"""
-Polymarket Gamma -> Gemini AI summarizer (Not financial advice).
-
-Behavior:
-- Input: Polymarket URL / slug / numeric eventId / free text search phrase
-- Fetches event + markets from Gamma API (Polymarket)
-- Calls Gemini API to generate a short "AI Trade Insight (Not financial advice)"
-- Prints ONLY the AI section to stdout (no raw market table).
-
-Dependencies: ONLY Python standard library.
-"""
-
 import argparse
 import datetime as dt
 import json
@@ -474,6 +462,35 @@ def call_gemini_insight(prompt: str, api_key: str, model: str = DEFAULT_GEMINI_M
         return f"Failed to parse Gemini response: {e}"
 
 
+# ----- Public function for API use -----
+
+def generate_insight_from_query(query: str, model: str = DEFAULT_GEMINI_MODEL) -> str:
+    """
+    Return plain-text AI Trade Insight for a given Polymarket query
+    (URL, slug, numeric ID, or search phrase).
+
+    Raises:
+        HttpError on HTTP issues
+        RuntimeError on event resolution issues
+        RuntimeError if GEMINI_API_KEY is missing
+    """
+    # Step 1: resolve event
+    event = load_event_from_query(query)
+
+    # Step 2: pick markets
+    markets = select_markets_for_ai(event)
+
+    # Step 3: Gemini API key
+    api_key = get_gemini_api_key()
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is not set. Unable to generate AI Trade Insight.")
+
+    # Step 4: build prompt and call Gemini
+    prompt = build_gemini_prompt(event, markets)
+    insight = call_gemini_insight(prompt, api_key, model=model)
+    return insight
+
+
 # ----- Main CLI -----
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -492,36 +509,17 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     args = parser.parse_args(argv)
 
-    # Step 1: Fetch event from Gamma
     try:
-        event = load_event_from_query(args.query)
+        insight = generate_insight_from_query(args.query, model=args.model)
     except HttpError as e:
-        print(f"[ERROR] Network/API error while talking to Gamma API:\n{e}", file=sys.stderr)
+        print(f"[ERROR] Network/API error while talking to Gamma/Gemini:\n{e}", file=sys.stderr)
         return 1
     except Exception as e:
         print(f"[ERROR] {e}", file=sys.stderr)
         return 1
 
-    # Step 2: Select markets (for AI only, no printing)
-    markets = select_markets_for_ai(event)
-
-    # Step 3: Prepare Gemini
-    api_key = get_gemini_api_key()
-    if not api_key:
-        print("[AI] GEMINI_API_KEY is not set. Unable to generate AI Trade Insight.", file=sys.stderr)
-        return 1
-
     print("-" * 88)
     print("AI Trade Insight (Not financial advice):")
-
-    try:
-        prompt = build_gemini_prompt(event, markets)
-        insight = call_gemini_insight(prompt, api_key, model=args.model)
-    except HttpError as e:
-        insight = f"Gemini API request failed: {e}"
-    except Exception as e:
-        insight = f"Unexpected error while talking to Gemini: {e}"
-
     wrapped = textwrap.fill(insight, width=88)
     print(wrapped)
     print("-" * 88)

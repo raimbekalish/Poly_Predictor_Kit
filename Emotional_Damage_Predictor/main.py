@@ -34,8 +34,8 @@ for item in all_comments:
 with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
        json.dump(all_comments, f, indent=4)
 
-# upload_training_data()
-# train_model()
+upload_training_data()
+train_model()
 
 print("Emotional Damage rate results:")
 final_rate = (emotional_rate + rational_rate) % 100

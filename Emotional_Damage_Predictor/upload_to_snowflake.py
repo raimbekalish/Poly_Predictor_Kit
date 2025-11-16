@@ -4,7 +4,10 @@ from dotenv import load_dotenv
 import pandas as pd
 from snowflake.snowpark import Session
 
-    
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_LABELED_PATH = os.path.join(BASE_DIR, "data_labeled.json")
+
 def upload_training_data():
     load_dotenv()
 
@@ -17,26 +20,17 @@ def upload_training_data():
         "database":  os.getenv("SNOW_DATABASE"),
         "schema":    os.getenv("SNOW_SCHEMA"),
     }
+    
+    if not os.path.exists(DATA_LABELED_PATH):
+        raise FileNotFoundError(f"Missing labeled file: {DATA_LABELED_PATH}")
 
-
-    with open("data_labeled.json", "r") as f:
+    with open(DATA_LABELED_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     df = pd.DataFrame(data)[["body", "label"]]
     df.columns = ["BODY", "LABEL"]
-
-    # connect to snowflake
     session = Session.builder.configs(connection_parameters).create()
 
-    # create table
-    # session.sql("""
-    #     CREATE OR REPLACE TABLE COMMENT_LABELS_DATA (
-    #                 BODY STRING,
-    #                 LABEL STRING
-    #     )
-    # """).collect()
-    
-    # upload data
     session.write_pandas(
         df,
         table_name="COMMENT_LABELS_DATA",
@@ -44,4 +38,4 @@ def upload_training_data():
         overwrite=False
     )
 
-    print(f"Successfully uploaded {len(df)} rows to Snowflake data table")
+    print(f"Successfully uploaded {len(df)} rows to Snowflake COMMENT_LABELS_DATA table")

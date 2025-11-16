@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 from datetime import datetime, timezone
 import math
@@ -9,6 +10,7 @@ import json
 GAMMA_BASE_URL = "https://gamma-api.polymarket.com"
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 # ---------- Helper functions ----------
@@ -60,7 +62,6 @@ def compute_outcome_metrics(probability: float, now: datetime, end_dt: datetime 
     - wipeout factor
     - simple risk labels
     """
-    # 1) Clamp p a little so we never divide by ~0
     EPS = 1e-4
     p_raw = probability
     p = max(EPS, min(1.0 - EPS, p_raw))
@@ -68,12 +69,8 @@ def compute_outcome_metrics(probability: float, now: datetime, end_dt: datetime 
     max_gain = 1.0 - p
     max_loss = p
 
-    wipeout_factor = max_loss / max_gain  # always defined because of clamping
+    wipeout_factor = max_loss / max_gain
 
-    # 2) Steamroller "shape" risk label (not overall event risk)
-    # - Below 75%: not a steamroller shape
-    # - 75–90%: medium
-    # - Above 90%: high only if wipeout is strong (>= 10x)
     if p < 0.75:
         risk_label = "low"
     elif p < 0.9:
@@ -81,16 +78,13 @@ def compute_outcome_metrics(probability: float, now: datetime, end_dt: datetime 
     else:
         risk_label = "high" if wipeout_factor >= 10.0 else "medium"
 
-    # 3) Time-to-resolution
     days_left = None
     time_risk = "unknown"
     if end_dt is not None:
-        # Make both datetimes naive so subtraction is safe
         end_naive = end_dt.replace(tzinfo=None)
         now_naive = now.replace(tzinfo=None)
 
         delta_days = (end_naive - now_naive).total_seconds() / 86400.0
-        # Clamp negatives: if market already expired, treat as 0 days left
         if delta_days < 0:
             delta_days = 0.0
         days_left = delta_days
@@ -115,9 +109,6 @@ def compute_outcome_metrics(probability: float, now: datetime, end_dt: datetime 
     }
 
 
-
-
-
 def pick_steamroller_side(outcome_metrics: dict):
     """
     outcome_metrics: dict like {"YES": {...}, "NO": {...}}
@@ -132,20 +123,14 @@ def pick_steamroller_side(outcome_metrics: dict):
         time_risk = m["time_risk"]
         days_left = m.get("days_left") or 0.0
 
-        # Must have all core metrics
         if wipe is None:
             continue
 
-        # Only consider very skewed setups:
-        # - high probability
-        # - big wipeout factor (tiny upside vs huge downside)
         if p < 0.9 or wipe < 10.0:
             continue
 
-        # Basic score: bigger wipeout * higher probability
         score = wipe * p
 
-        # Slight bump for higher time-risk (more time for surprises)
         if time_risk == "high":
             score *= 1.3
         elif time_risk == "medium":
@@ -169,7 +154,6 @@ def pick_steamroller_side(outcome_metrics: dict):
 
     wipe_int = int(math.floor(wipe)) if wipe is not None else None
 
-    # Overall risk based on final score
     if best_score > 30:
         overall = "high"
     elif best_score > 15:
@@ -177,7 +161,6 @@ def pick_steamroller_side(outcome_metrics: dict):
     else:
         overall = "low"
 
-    # Build a simple human-readable message
     parts = []
     parts.append(f"{best_side} looks like a steamroller trade.")
     parts.append(f"Current implied probability is about {p * 100:.1f}%.")
@@ -196,8 +179,6 @@ def pick_steamroller_side(outcome_metrics: dict):
     }
 
 
-
-
 # ---------- Main endpoint ----------
 
 @app.route("/api/steamroller", methods=["GET"])
@@ -206,7 +187,6 @@ def steamroller():
     if not slug:
         return jsonify({"error": "missing ?slug= parameter"}), 400
 
-    # 1) Fetch market info from Gamma by slug
     try:
         resp = requests.get(f"{GAMMA_BASE_URL}/events/slug/{slug}", timeout=5)
     except Exception as e:
@@ -224,11 +204,10 @@ def steamroller():
     active_markets = [m for m in markets if m.get("active") and not m.get("closed")]
 
     if active_markets:
-        market = active_markets[0]  # or pick by closest date / highest liquidity
+        market = active_markets[0]
     else:
         market = markets[0]
 
-    # 2) Extract basic fields
     question = market.get("question") or market.get("title") or slug
     end_iso = market.get("endDateIso") or market.get("endDate")
     end_dt = parse_iso_datetime(end_iso)
@@ -237,7 +216,6 @@ def steamroller():
     outcomes_raw = safe_outcome_list(market.get("outcomes"))
     prices_raw = safe_outcome_list(market.get("outcomePrices"))
 
-    # If lengths don't match, just bail out gracefully
     if not outcomes_raw or not prices_raw or len(outcomes_raw) != len(prices_raw):
         return jsonify({
             "slug": slug,
@@ -247,16 +225,13 @@ def steamroller():
             "raw_prices": prices_raw,
         }), 500
 
-    # 3) Build metrics per outcome
     outcome_metrics = {}
     for outcome_name, price_value in zip(outcomes_raw, prices_raw):
-        # Try to interpret price_value as float; if it's > 1, assume it's in 0-100 and rescale
         try:
             p = float(price_value)
             if p > 1.0:
                 p = p / 100.0
         except Exception:
-            # skip unparseable
             continue
 
         metrics = compute_outcome_metrics(p, now, end_dt)
@@ -271,8 +246,6 @@ def steamroller():
 
     summary = pick_steamroller_side(outcome_metrics)
 
-    # 4) Response object
-    # Use days_left from any outcome (they are all the same per market)
     any_outcome = next(iter(outcome_metrics.values()))
     response = {
         "slug": slug,
@@ -291,5 +264,4 @@ def ping():
 
 
 if __name__ == "__main__":
-    # Dev mode
     app.run(host="0.0.0.0", port=5001, debug=True)
