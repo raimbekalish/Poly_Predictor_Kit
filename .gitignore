@@ -1,0 +1,4 @@
+.env
+Emotional_Damage_Predictor/__pycache__
+Emotional_Damage_Predictor/comment_classifier.pkl
+Emotional_Damage_Predictor/data*
