@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Polymarket Copilot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+        color: #e2e8f0;
+      }
+
+      .app-root {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 640px;
+        background: rgba(15, 23, 42, 0.96);
+        border-radius: 20px;
+        padding: 24px 24px 32px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        backdrop-filter: blur(18px);
+        animation: card-in 0.4s ease-out;
+      }
+
+      @keyframes card-in {
+        from {
+          opacity: 0;
+          transform: translateY(16px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .title {
+        margin: 0 0 4px;
+        font-size: 24px;
+      }
+
+      .subtitle {
+        margin: 0 0 20px;
+        font-size: 13px;
+        opacity: 0.85;
+      }
+
+      .accent {
+        color: #38bdf8;
+      }
+
+      .search-form {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      .event-input {
+        flex: 1 1 260px;
+        min-width: 0;
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid #1f2937;
+        background: #020617;
+        color: #e5e7eb;
+        font-size: 13px;
+        outline: none;
+        transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      }
+
+      .event-input::placeholder {
+        color: #6b7280;
+      }
+
+      .event-input:focus {
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5);
+        background: #020617;
+      }
+
+      .primary-btn {
+        flex: 0 0 auto;
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #38bdf8, #22c55e);
+        color: #020617;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.15s ease;
+      }
+
+      .primary-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 25px rgba(34, 197, 94, 0.25);
+      }
+
+      .primary-btn:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: none;
+      }
+
+      .primary-btn:disabled {
+        opacity: 0.7;
+        cursor: default;
+      }
+
+      .panel {
+        margin-top: 10px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: rgba(15, 23, 42, 0.8);
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-6px);
+        transition:
+          max-height 0.4s ease,
+          opacity 0.3s ease,
+          transform 0.3s ease;
+      }
+
+      .panel.open {
+        max-height: 420px;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 14px 6px;
+      }
+
+      .panel-header h2 {
+        font-size: 14px;
+        margin: 0;
+      }
+
+      .panel-body {
+        padding: 0 14px 12px 14px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 20px;
+        min-width: 20px;
+        padding: 0 6px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #1f2937;
+        color: #e5e7eb;
+      }
+
+      .pill--blue {
+        background: rgba(56, 189, 248, 0.16);
+        color: #7dd3fc;
+      }
+
+      .pill--amber {
+        background: rgba(245, 158, 11, 0.16);
+        color: #fbbf24;
+      }
+
+      .pill--green {
+        background: rgba(34, 197, 94, 0.16);
+        color: #86efac;
+      }
+
+      .stats-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+      }
+
+      .stat {
+        flex: 1 1 120px;
+        background: radial-gradient(circle at top left, #0f172a, #020617);
+        border-radius: 12px;
+        padding: 10px 11px;
+      }
+
+      .stat--big {
+        margin-bottom: 6px;
+      }
+
+      .stat-label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        opacity: 0.7;
+        margin-bottom: 4px;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      .stat-unit {
+        font-size: 13px;
+        opacity: 0.7;
+        margin-left: 2px;
+      }
+
+      .hint {
+        margin: 0;
+        font-size: 11px;
+        opacity: 0.8;
+      }
+
+      .summary-text {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.5;
+        opacity: 0.95;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-root">
+      <div class="card">
+        <h1 class="title">Polymarket Predictor</h1>
+        <p class="subtitle">
+          Enter an event ID to analyze
+          <span class="accent">emotion</span>,
+          <span class="accent">risk</span> and
+          <span class="accent">outlook</span>.
+        </p>
+
+        <form class="search-form" id="search-form">
+          <input
+            id="event-input"
+            class="event-input"
+            placeholder="Enter event ID (e.g. ufc_islam_01)"
+          />
+          <button class="primary-btn" type="submit">Analyze</button>
+        </form>
+
+        <!-- Emotional vs Logical -->
+        <div class="panel" id="panel-emotion">
+          <div class="panel-header">
+            <span class="pill pill--blue">1</span>
+            <h2>Emotional vs Logical Analyzer</h2>
+          </div>
+          <div class="panel-body">
+            <div class="stats-row">
+              <div class="stat">
+                <span class="stat-label">Emotional Bias</span>
+                <span class="stat-value"
+                  ><span id="emo-value">0</span
+                  ><span class="stat-unit">%</span></span
+                >
+              </div>
+              <div class="stat">
+                <span class="stat-label">Logical / Fact-based</span>
+                <span class="stat-value"
+                  ><span id="logic-value">0</span
+                  ><span class="stat-unit">%</span></span
+                >
+              </div>
+            </div>
+            <p class="hint">
+              Higher emotional bias =&nbsp;more hype / YOLO / vibes-driven comments.
+            </p>
+          </div>
+        </div>
+
+        <!-- Risk Predictor -->
+        <div class="panel" id="panel-risk">
+          <div class="panel-header">
+            <span class="pill pill--amber">2</span>
+            <h2>Risk Predictor</h2>
+          </div>
+          <div class="panel-body">
+            <div class="stat stat--big">
+              <span class="stat-label">Overall Risk</span>
+              <span class="stat-value"
+                ><span id="risk-value">0</span
+                ><span class="stat-unit">%</span></span
+              >
+            </div>
+            <p class="hint">
+              80–100% =&nbsp;<strong>high-risk / degen</strong>. Lower scores are safer.
+            </p>
+          </div>
+        </div>
+
+        <!-- AI Summary -->
+        <div class="panel" id="panel-summary">
+          <div class="panel-header">
+            <span class="pill pill--green">3</span>
+            <h2>AI Market Summary</h2>
+          </div>
+          <div class="panel-body">
+            <p class="summary-text" id="summary-text">
+              Enter an event ID to see the copilot summary.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+   <script>
+  // === CONFIG: put your friends' endpoints here ===
+  const EMOTIONAL_API_URL = "https://your-domain.com/emotional";
+  const RISK_API_URL = "https://your-domain.com/risk";
+  const SUMMARY_API_URL = "";
+  // ================================================
+
+  const form = document.getElementById("search-form");
+  const eventInput = document.getElementById("event-input");
+
+  const panelEmotion = document.getElementById("panel-emotion");
+  const panelRisk = document.getElementById("panel-risk");
+  const panelSummary = document.getElementById("panel-summary");
+
+  const emoValueEl = document.getElementById("emo-value");
+  const logicValueEl = document.getElementById("logic-value");
+  const riskValueEl = document.getElementById("risk-value");
+  const summaryTextEl = document.getElementById("summary-text");
+
+  function countUp(el, target, duration = 1000) {
+    target = Math.max(0, Math.min(100, target));
+    const start = 1;
+    const startTime = performance.now();
+
+    function tick(now) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      const current = Math.round(start + t * (target - start));
+      el.textContent = String(current);
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = eventInput.value.trim();
+    if (!id) return;
+
+    // reset panels
+    panelEmotion.classList.remove("open");
+    panelRisk.classList.remove("open");
+    panelSummary.classList.remove("open");
+    summaryTextEl.textContent = "Analyzing…";
+
+    try {
+      // call all 3 backends in parallel
+      const body = JSON.stringify({ event_id: id });
+
+      const [emoResp, riskResp, sumResp] = await Promise.all([
+        fetch(EMOTIONAL_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+        }),
+        fetch(RISK_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+        }),
+        fetch(SUMMARY_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+        }),
+      ]);
+
+      if (!emoResp.ok || !riskResp.ok || !sumResp.ok) {
+        throw new Error("One of the services returned an error");
+      }
+
+      const emoData = await emoResp.json();
+      const riskData = await riskResp.json();
+      const sumData = await sumResp.json();
+
+      const emotional = emoData.emotionalScore; // number 0–100
+      const logical = emoData.logicalScore;     // number 0–100
+      const risk = riskData.riskScore;          // number 0–100
+      const summary = sumData.summary;          // string
+
+      // animate panels + counters in sequence
+      setTimeout(() => {
+        panelEmotion.classList.add("open");
+        countUp(emoValueEl, emotional, 800);
+        countUp(logicValueEl, logical, 800);
+
+        setTimeout(() => {
+          panelRisk.classList.add("open");
+          countUp(riskValueEl, risk, 900);
+
+          setTimeout(() => {
+            panelSummary.classList.add("open");
+            summaryTextEl.textContent = summary;
+          }, 400);
+        }, 400);
+      }, 200);
+    } catch (err) {
+      console.error(err);
+      summaryTextEl.textContent =
+        "Error calling services: " + (err.message || String(err));
+      panelSummary.classList.add("open");
+    }
+  });
+</script>
+  </body>
+</html>
